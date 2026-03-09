@@ -330,7 +330,15 @@ def fixup_build_command(
         assembler = res[ind1 + 1 : ind2]
         compiler_args = res[ind2 + 1 :]
         while compiler and compiler[0].startswith("-"):
-            compiler.pop(0)
+            flag = compiler.pop(0)
+            if flag in (
+                "--input-enc",
+                "--output-enc",
+                "--asm-prelude",
+                "--convert-statics",
+                "--keep-preprocessed",
+            ):
+                compiler.pop(0)
         res = compiler + compiler_args
     except ValueError:
         pass
@@ -747,7 +755,11 @@ def get_decompme_compiler_name(
 
     available_ids: List[str] = []
     try:
-        with urllib.request.urlopen(f"{api_base}/api/compiler") as f:
+        req = urllib.request.Request(
+            f"{api_base}/api/compiler",
+            headers={"User-Agent": "decomp-permuter"},
+        )
+        with urllib.request.urlopen(req) as f:
             json_data = json.load(f)
             available = json_dict(json_data, "compilers", allow_missing=False)
             available_ids = list(available.keys())
